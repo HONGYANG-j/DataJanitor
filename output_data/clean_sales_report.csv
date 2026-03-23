@@ -1,0 +1,4 @@
+Transaction_ID,Date,Customer_ID,Category,Sales
+1001,2023-10-01,C-001,Electronics,250.50
+1003,,C-003,Electronics, 
+1004,,C-004,Furniture,120.00
