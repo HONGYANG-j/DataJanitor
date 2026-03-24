@@ -1,40 +1,54 @@
+import streamlit as st
 import pandas as pd
-import os
+import io
 
-def clean_data(input_file, output_file):
-    print(f"🚀 Read file: {input_file}...")
+# 1. Page Configuration
+st.set_page_config(page_title="The Data Janitor", page_icon="🧹")
+
+# 2. Header and Description
+st.title("🧹 The Data Janitor")
+st.subheader("Automated Data Cleaning Pipeline for E-commerce")
+st.markdown("Upload your messy CSV file, and get a perfectly formatted, analysis-ready dataset in seconds. Say goodbye to manual Excel formatting.")
+
+# 3. File Uploader Interface
+uploaded_file = st.file_uploader("Upload Messy CSV File", type=['csv'])
+
+# 4. Core Processing Logic
+if uploaded_file is not None:
+    st.info("File uploaded successfully. Processing data...")
     
-    # Read Raw File
-    df = pd.read_csv(input_file)
-
-    # 1. Remove Duplicates
+    # Read the raw data
+    df = pd.read_csv(uploaded_file)
+    
+    # Execute cleaning pipeline
     initial_rows = len(df)
     df.drop_duplicates(inplace=True)
-    print(f"🧹 Delete {initial_rows - len(df)} rows of duplicated data")
-
-    # 2. Replace Empty Sales with 0, Remove rows without Customer_ID
+    duplicates_removed = initial_rows - len(df)
+    
     if 'Sales' in df.columns:
         df['Sales'] = df['Sales'].fillna(0)
-    df.dropna(subset=['Customer_ID'], inplace=True)
-
-    # 3. Standardize Date
+    
+    if 'Customer_ID' in df.columns:
+        df.dropna(subset=['Customer_ID'], inplace=True)
+        
     if 'Date' in df.columns:
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
-
-    # 4. Remove Unnecessary Spaces & Make First letter of each category big capital letter
+        
     if 'Category' in df.columns:
         df['Category'] = df['Category'].str.strip().str.title()
-
-    # Ensure Cleaned File existent
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        
+    # Display success metrics
+    st.success(f"✅ Cleaning Complete! Automatically removed {duplicates_removed} duplicate rows and standardized formats.")
     
-    # Show output
-    df.to_csv(output_file, index=False)
-    print(f"✅ Cleaning complete! The cleaned file is at: {output_file}")
-
-if __name__ == "__main__":
-    # Set input and output location
-    INPUT_PATH = "raw_data/messy_sales.csv"
-    OUTPUT_PATH = "output_data/clean_sales_report.csv"
+    # 5. Live Data Preview
+    st.subheader("✨ Clean Data Preview")
+    st.dataframe(df.head())
     
-    clean_data(INPUT_PATH, OUTPUT_PATH)
+    # 6. Export Functionality
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="⬇️ Download Cleaned Data (CSV)",
+        data=csv,
+        file_name='perfect_sales_report.csv',
+        mime='text/csv',
+    )
